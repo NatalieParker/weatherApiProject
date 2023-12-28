@@ -1,5 +1,7 @@
 import requests
-import random
+import click
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
 
 cities = [
   "Abu Dhabi", "Amsterdam", "Ankara", "Athens", "Auckland", "Bangkok", "Barcelona", "Beijing", "Belgrade", "Berlin",
@@ -18,13 +20,20 @@ cities = [
 baseUrl = "http://api.weatherapi.com/v1"
 request = None;
 data = None;
-forecastRange = str(1);
 
-rand = random.randint(0,105);
+cityCompleter = WordCompleter(cities);
+getInput = prompt("Enter a city name. \n", completer=cityCompleter, complete_while_typing=True);
+forecastRange = str(10);
 
-getUrl = "http://api.weatherapi.com/v1/forecast.json?key=c69cac9f370144a4baa212601232712&q=" + cities[rand] + "&days=" + (forecastRange);
-request = requests.get(getUrl);
-data = request.json();
+while True:
+    getUrl = "http://api.weatherapi.com/v1/forecast.json?key=c69cac9f370144a4baa212601232712&q=" + getInput + "&days=" + (forecastRange);
+    request = requests.get(getUrl);
+    data = request.json();
+    if ('error' in data):
+        print("Invalid city name, please try again.");
+        getInput = input();
+    else:
+        break;
 
 if (request.status_code == 200):
     print(forecastRange + "-Day Forecast for:", data.get('location', {}).get('name', 'N/A'));
