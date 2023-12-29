@@ -18,7 +18,7 @@ cities = [
 baseUrl = "http://api.weatherapi.com/v1"
 request = None;
 data = None;
-forecastRange = str(1);
+forecastRange = str(10);
 
 rand = random.randint(0,105);
 

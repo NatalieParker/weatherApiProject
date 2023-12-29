@@ -1,7 +1,6 @@
 import requests
-import click
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import FuzzyCompleter, Completion, Completer
+from prompt_toolkit.shortcuts import CompleteStyle, prompt
 
 cities = [
   "Abu Dhabi", "Amsterdam", "Ankara", "Athens", "Auckland", "Bangkok", "Barcelona", "Beijing", "Belgrade", "Berlin",
@@ -21,9 +20,19 @@ baseUrl = "http://api.weatherapi.com/v1"
 request = None;
 data = None;
 
-cityCompleter = WordCompleter(cities);
-getInput = prompt("Enter a city name. \n", completer=cityCompleter, complete_while_typing=True);
+class CityCompleter(Completer):
+    def get_completions(self, document, complete_event):
+        word = document.get_word_before_cursor();
+        for city in cities:
+            if word.lower() in city.lower():
+                yield Completion(
+                    city,
+                    start_position=0,
+                )
+
 forecastRange = str(10);
+getInput = prompt("Enter a city name. \n", completer=FuzzyCompleter(CityCompleter()));
+    
 
 while True:
     getUrl = "http://api.weatherapi.com/v1/forecast.json?key=c69cac9f370144a4baa212601232712&q=" + getInput + "&days=" + (forecastRange);
@@ -31,14 +40,20 @@ while True:
     data = request.json();
     if ('error' in data):
         print("Invalid city name, please try again.");
-        getInput = input();
+        getInput = prompt(completer=FuzzyCompleter(CityCompleter()));
     else:
         break;
 
 if (request.status_code == 200):
-    print(forecastRange + "-Day Forecast for:", data.get('location', {}).get('name', 'N/A'));
+    cityName = data.get('location', {}).get('name', 'N/A');
+
+    if cityName not in cities:
+        print("This city is not within range of suggestions. \n");
+    
+    print(forecastRange + "-Day Forecast for:", cityName);
     forecast = data.get('forecast', {}).get("forecastday", [{}]);
     day = 0
+
     for date in forecast:
         print("DATE:", data.get('forecast', {}).get("forecastday", [{}])[day].get('date', 'N/A'));
         print("WEATHER:", data.get('current', {}).get('condition', {}).get('text', 'N/A'));
